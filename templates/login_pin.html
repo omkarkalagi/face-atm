@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Enter PIN - Face ATM</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body style="margin:0; font-family:'Segoe UI',Arial,sans-serif; background:url('https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed; background-size:cover;">
+  <div style="background:rgba(255,255,255,0.93); max-width:420px; margin:48px auto; border-radius:18px; box-shadow:0 4px 32px #0002; padding:40px 32px; animation:fadein 1.2s; text-align:center;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div style="padding:12px; border-radius:6px; margin-bottom:16px; text-align:center; font-weight:500; background:{% if category == 'danger' %}#f8d7da{% elif category == 'success' %}#d4edda{% else %}#e2e3e5{% endif %}; color:{% if category == 'danger' %}#721c24{% elif category == 'success' %}#155724{% else %}#383d41{% endif %};">{{message}}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <h2 style="font-weight:700; margin-bottom:24px; color:#1a237e;">Enter PIN / Password</h2>
+    <form method="post" style="display:flex; flex-direction:column; gap:16px;">
+      <div>
+        <label for="pin" style="font-weight:500;">PIN / Password</label>
+        <input type="password" class="form-control" name="pin" id="pin" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #bbb;">
+      </div>
+      <button class="btn btn-success" type="submit" style="padding:14px 28px; background:#43a047; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-size:1em; box-shadow:0 2px 8px #43a04733; transition:background 0.2s;">Login</button>
+      <a href="/" class="btn btn-secondary ms-2" style="padding:14px 28px; background:#6c757d; color:#fff; border-radius:8px; text-decoration:none; font-weight:600; font-size:1em; box-shadow:0 2px 8px #6c757d33; transition:background 0.2s;">Home</a>
+    </form>
+  </div>
+  <style>
+    @keyframes fadein { from { opacity:0; transform:translateY(30px);} to { opacity:1; transform:none; } }
+    button:hover, a:hover { filter:brightness(1.08); }
+  </style>
+</body>
+</html>

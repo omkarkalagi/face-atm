@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Register - Face ATM</title>
+</head>
+<body style="margin:0; font-family:'Segoe UI',Arial,sans-serif; background:url('https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed; background-size:cover;">
+  <div style="background:rgba(255,255,255,0.93); max-width:520px; margin:48px auto; border-radius:18px; box-shadow:0 4px 32px #0002; padding:40px 32px; animation:fadein 1.2s;">
+  <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Bank Logo" style="width:60px; margin-bottom:18px; filter:drop-shadow(0 2px 6px #0002); display:block; margin-left:auto; margin-right:auto;">
+    <h2 style="font-weight:700; margin-bottom:24px; text-align:center; color:#1a237e;">Register / Create Account</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div style="padding:12px; border-radius:6px; margin-bottom:16px; text-align:center; font-weight:500; background:{% if category == 'danger' %}#f8d7da{% elif category == 'success' %}#d4edda{% else %}#e2e3e5{% endif %}; color:{% if category == 'danger' %}#721c24{% elif category == 'success' %}#155724{% else %}#383d41{% endif %};">{{message}}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <form id="reg-form" method="post" style="display:flex; flex-direction:column; gap:16px;">
+      <div>
+        <label style="font-weight:500;">Name</label><br>
+        <input name="name" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #bbb;">
+      </div>
+      <div>
+        <label style="font-weight:500;">Account Number (leave blank for auto)</label><br>
+        <input name="acc_no" style="width:100%; padding:10px; border-radius:8px; border:1px solid #bbb;">
+      </div>
+      <div>
+        <label style="font-weight:500;">Initial Deposit Amount</label><br>
+        <input type="number" name="deposit" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #bbb;">
+      </div>
+      <div>
+        <label style="font-weight:500;">Password / PIN</label><br>
+        <input type="password" name="password" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #bbb;">
+      </div>
+      <div>
+        <label style="font-weight:500;">Capture Face Images (at least 5)</label><br>
+        <video id="video" width="320" height="240" autoplay muted style="border-radius:10px; border:1px solid #bbb; margin-top:8px; box-shadow:0 2px 8px #0001;"></video>
+        <div style="margin-top:10px;">
+          <button type="button" class="btn btn-info" id="capture-btn" style="padding:10px 16px; background:#00bcd4; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Capture</button>
+        </div>
+        <div id="captures" class="mt-2" style="margin-top:10px;"></div>
+        <input type="hidden" name="images" id="images">
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button type="submit" style="padding:14px 28px; background:#43a047; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; margin-top:8px; font-size:1em; box-shadow:0 2px 8px #43a04733; transition:background 0.2s;">Register</button>
+        <a href="/" class="btn btn-secondary ms-2" style="padding:12px 24px; background:#6c757d; color:#fff; border-radius:8px; text-decoration:none; font-weight:500; margin-top:8px;">Home</a>
+      </div>
+    </form>
+  </div>
+  <style>
+    @keyframes fadein { from { opacity:0; transform:translateY(30px);} to { opacity:1; transform:none; } }
+    button:hover, a:hover { filter:brightness(1.08); }
+  </style>
+<script src="/static/webcam.js"></script>
+<script>
+let images = [];
+startWebcam("video");
+document.getElementById("capture-btn").onclick = function() {
+  captureImage("video", function(dataURL) {
+    images.push(dataURL);
+    let img = document.createElement("img");
+    img.src = dataURL;
+    img.width = 80;
+    img.className = "me-2 mb-2";
+    document.getElementById("captures").appendChild(img);
+    document.getElementById("images").value = JSON.stringify(images);
+  });
+};
+document.getElementById("reg-form").onsubmit = function(e) {
+  if(images.length < 5) {
+    alert("Please capture at least 5 face images.");
+    e.preventDefault();
+  }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+Face ATM - ML Report
+========================================
+
+[model_cv]
+- cv_accuracy: 1.0
+- cv_f1_macro: 1.0
+- cv_micro_auc: 0.7711111111111111
+- cv_splits: 5.0
+
+[embeddings_viz]
+- pca_var_pc1: 0.42047637701034546
+- pca_var_pc2: 0.2279376983642578
+
+[learning_curve]
+- lc_cv_best_acc: 1.0
+- lc_max_train_size: 12.0
+- lc_min_train_size: 7.0
+
+[roc_per_class]
+- roc_per_class_mean_auc: 0.6733333333333333
+
+[calibration]
+No data available.
+

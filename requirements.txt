@@ -1,0 +1,10 @@
+flask
+opencv-python-headless==4.7.0.72
+mediapipe
+imutils
+numpy
+scikit-learn
+pandas
+gunicorn
+matplotlib
+seaborn
