@@ -2,8 +2,6 @@
 import os
 import cv2
 import pickle
-import mediapipe as mp
-from imutils import paths
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVC
 
@@ -15,42 +13,46 @@ def train_model():
     if not os.path.exists(EMBEDDER_MODEL):
         raise FileNotFoundError(f"Missing embedder file: {EMBEDDER_MODEL}")
     embedder = cv2.dnn.readNetFromTorch(EMBEDDER_MODEL)
-    imagePaths = list(paths.list_images(DATASET_DIR))
+    imagePaths = [
+        os.path.join(root, file)
+        for root, _, files in os.walk(DATASET_DIR)
+        for file in files
+        if file.lower().endswith(('.png', '.jpg', '.jpeg'))
+    ]
     if not imagePaths:
         raise FileNotFoundError("No images in dataset to train.")
-    mp_fd = mp.solutions.face_detection.FaceDetection(min_detection_confidence=0.5)
     knownEmbeddings = []
     knownNames = []
     total = 0
+    # Use OpenCV's Haar cascade as a fallback detector
+    faceCascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+    if faceCascade.empty():
+        raise RuntimeError("Failed to load Haar cascade for face detection")
+
     for imagePath in imagePaths:
         name = imagePath.split(os.path.sep)[-2]
         image = cv2.imread(imagePath)
         if image is None:
             continue
-        rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        results = mp_fd.process(rgb)
-        if results.detections:
-            for det in results.detections:
-                bbox = det.location_data.relative_bounding_box
-                ih, iw, _ = image.shape
-                x = max(0, int(bbox.xmin * iw))
-                y = max(0, int(bbox.ymin * ih))
-                w = int(bbox.width * iw)
-                h = int(bbox.height * ih)
-                x2 = min(iw, x + w)
-                y2 = min(ih, y + h)
-                face = image[y:y2, x:x2]
-                if face.size == 0:
-                    continue
-                (fH, fW) = face.shape[:2]
-                if fW < 20 or fH < 20:
-                    continue
-                faceBlob = cv2.dnn.blobFromImage(face, 1.0/255, (96,96), (0,0,0), swapRB=True, crop=False)
-                embedder.setInput(faceBlob)
-                vec = embedder.forward()
-                knownNames.append(name)
-                knownEmbeddings.append(vec.flatten())
-                total += 1
+
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        rects = faceCascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+
+        for (x, y, w, h) in rects:
+            x2 = x + w
+            y2 = y + h
+            face = image[y:y2, x:x2]
+            if face.size == 0:
+                continue
+            (fH, fW) = face.shape[:2]
+            if fW < 20 or fH < 20:
+                continue
+            faceBlob = cv2.dnn.blobFromImage(face, 1.0/255, (96,96), (0,0,0), swapRB=True, crop=False)
+            embedder.setInput(faceBlob)
+            vec = embedder.forward()
+            knownNames.append(name)
+            knownEmbeddings.append(vec.flatten())
+            total += 1
     if total == 0:
         raise ValueError("No valid faces found.")
     os.makedirs(OUTPUT_DIR, exist_ok=True)

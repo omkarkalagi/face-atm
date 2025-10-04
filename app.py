@@ -1,5 +1,8 @@
 # app.py
 import os
+import subprocess
+import threading
+import time
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
 from storage import read_accounts, write_accounts, log_transaction, get_history
 from face_utils import load_models, recognize_from_image_b64
@@ -10,32 +13,52 @@ app.config['MAX_CONTENT_LENGTH'] = 512 * 1024 * 1024  # 512 MB
 import secrets
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(16))
 
-# initial load
-embedder, recognizer, le = load_models()
+# initial load - handle errors gracefully
+try:
+    embedder, recognizer, le = load_models()
+    print("✅ Face recognition models loaded successfully")
+except Exception as e:
+    embedder, recognizer, le = None, None, None
+    print(f"⚠️  Face recognition models not loaded: {e}")
+    print("💡 The app will start but face recognition features will be disabled")
+
+def start_nextjs_server():
+    """Start the Next.js development server"""
+    try:
+        print("🚀 Starting Next.js frontend server...")
+        web_app_dir = os.path.join(os.getcwd(), "web_app")
+        subprocess.run(["npm", "run", "dev"], cwd=web_app_dir, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to start Next.js server: {e}")
+    except FileNotFoundError:
+        print("❌ npm not found. Please ensure Node.js and npm are installed.")
+    except Exception as e:
+        print(f"❌ Error starting Next.js server: {e}")
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
-
-
-# Login: Step 1 - Face Verification (via /verify and /api/verify)
 @app.route("/login", methods=["GET"])
 def login():
     return render_template("verify.html")
-
 @app.route("/api/verify", methods=["POST"])
 def api_verify():
     global embedder, recognizer, le
     try:
         data = request.json
         img_b64 = data.get("image")
+
+        # Check if face recognition models are loaded
+        if embedder is None or recognizer is None or le is None:
+            return jsonify({"ok": False, "error": "Face recognition models not loaded. Please train the model first."}), 200
+
         result = recognize_from_image_b64(img_b64, embedder, recognizer, le)
         if result.get("name") != "unknown":
             session["user_id"] = result["name"]
         return jsonify(result)
     except Exception as e:
-        return jsonify({"ok": False, "error": "No face matched or server error."}), 200
+        return jsonify({"ok": False, "error": f"Face recognition error: {str(e)}"}), 200
 
 # Login: Step 2 - PIN/Password Verification
 @app.route("/login_pin", methods=["GET", "POST"])
@@ -161,9 +184,9 @@ def register():
             if not isinstance(images, list):
                 images = []
         print('Images loaded:', len(images))
-        # Password validation: must be 4 digits
-        if not (password and password.isdigit() and len(password) == 4):
-            flash("Password must be exactly 4 digits.", "danger")
+        # Password validation: must be 4-10 digits
+        if not (password and password.isdigit() and 4 <= len(password) <= 10):
+            flash("Password must be 4-10 digits.", "danger")
             return redirect(url_for("register"))
         if not (name and acc_no and deposit > 0 and password and images and len(images) >= 5):
             print('Validation failed')
@@ -224,4 +247,19 @@ def enroll():
     return redirect(url_for("enroll"))
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    # Start Next.js server in a separate thread
+    print("Starting FaceATM - Both Frontend and Backend servers...")
+
+    # Start Next.js server in background thread
+    nextjs_thread = threading.Thread(target=start_nextjs_server, daemon=True)
+    nextjs_thread.start()
+
+    # Give Next.js server a moment to start
+    time.sleep(2)
+
+    print("Frontend: http://localhost:3000")
+    print("Backend: http://localhost:5000")
+    print("Both servers starting...")
+
+    # Start Flask server
+    app.run(debug=True, host="0.0.0.0", port=5000, use_reloader=False)

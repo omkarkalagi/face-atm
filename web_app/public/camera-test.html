@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        video {
+            width: 640px;
+            height: 480px;
+            border: 2px solid #333;
+            background: #000;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .error {
+            color: red;
+            margin: 10px 0;
+        }
+        .success {
+            color: green;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Camera Access Test</h1>
+    <div>
+        <button onclick="startCamera()">Start Camera</button>
+        <button onclick="stopCamera()">Stop Camera</button>
+    </div>
+    <div id="status"></div>
+    <video id="video" autoplay muted></video>
+
+    <script>
+        let stream = null;
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+
+        function updateStatus(message, isError = false) {
+            status.innerHTML = `<div class="${isError ? 'error' : 'success'}">${message}</div>`;
+            console.log(message);
+        }
+
+        async function startCamera() {
+            try {
+                updateStatus('Requesting camera access...');
+                
+                // Check if getUserMedia is supported
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('getUserMedia is not supported in this browser');
+                }
+
+                // Request camera with high resolution
+                const constraints = {
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    },
+                    audio: false
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                
+                updateStatus('Camera started successfully! Resolution: ' + 
+                    stream.getVideoTracks()[0].getSettings().width + 'x' + 
+                    stream.getVideoTracks()[0].getSettings().height);
+
+            } catch (error) {
+                let errorMessage = 'Camera access failed: ';
+                
+                switch(error.name) {
+                    case 'NotAllowedError':
+                        errorMessage += 'Permission denied. Please allow camera access in your browser.';
+                        break;
+                    case 'NotFoundError':
+                        errorMessage += 'No camera found on this device.';
+                        break;
+                    case 'NotReadableError':
+                        errorMessage += 'Camera is already in use by another application.';
+                        break;
+                    case 'OverconstrainedError':
+                        errorMessage += 'Camera constraints cannot be satisfied.';
+                        break;
+                    default:
+                        errorMessage += error.message;
+                }
+                
+                updateStatus(errorMessage, true);
+                console.error('Camera error:', error);
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                stream = null;
+                updateStatus('Camera stopped.');
+            }
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', stopCamera);
+    </script>
+</body>
+</html>

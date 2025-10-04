@@ -79,8 +79,9 @@ dmypy.json
 *.pb
 *.tflite
 *.joblib
-*.pkl
-*.pickle
+# Keep our trained models but ignore temporary ones
+# *.pkl
+# *.pickle
 *.npz
 *.npy
 *.onnx
@@ -88,9 +89,49 @@ runs/
 logs/
 tensorboard/
 checkpoints/
-models/
-output/
+# Keep our output directory but ignore temporary files
+# output/
 results/
+
+# Next.js
+web_app/.next/
+web_app/out/
+web_app/build/
+web_app/.vercel/
+
+# Node.js
+web_app/node_modules/
+web_app/npm-debug.log*
+web_app/yarn-debug.log*
+web_app/yarn-error.log*
+
+# Environment variables
+web_app/.env.local
+web_app/.env.development.local
+web_app/.env.test.local
+web_app/.env.production.local
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# IDE files
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store?
+ehthumbs_vista.db
+
+# Flask session files
+flask_session/
+
+# Backup files
+*.bak
+*.backup
 
 # VS Code
 .vscode/
