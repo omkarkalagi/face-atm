@@ -19,7 +19,7 @@ interface UserData {
 
 export default function Dashboard() {
   const params = useParams()
-  const userId = params.userId as string
+  const userId = params?.userId as string
   const router = useRouter()
   const [userData, setUserData] = useState<UserData | null>(null)
   const [transactionType, setTransactionType] = useState<'deposit' | 'withdraw'>('deposit')
