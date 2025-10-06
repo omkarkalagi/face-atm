@@ -1,3 +1,4 @@
+Live Model - https://web-app-two-swart.vercel.app/
 # 🏧 FaceATM - AI-Powered Facial Recognition ATM System
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.5.4-black?style=flat-square&logo=next.js)](https://nextjs.org/)
